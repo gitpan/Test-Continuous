@@ -4,7 +4,7 @@ package Test::Continuous;
 
 use 5.008;
 
-our $VERSION = '0.0.1';
+our $VERSION = '0.0.2';
 
 use Exporter::Lite;
 use App::Prove;
@@ -63,7 +63,7 @@ __END__
 
 =head1 NAME
 
-Test::Continuous - Run your tests suit continusouly when developing .
+Test::Continuous - Run your tests suite continusouly when developing.
 
 =head1 VERSION
 
@@ -76,9 +76,8 @@ This document describes Test::Continuous version 0.0.1
 
 =head1 DESCRIPTION
 
-<I>Continuous Testing</I> is a concept to re-run software tests
+I<Continuous Testing> is a concept and tool to re-run software tests
 as soon as the developer saved the source code.
-
 
 See also L<http://groups.csail.mit.edu/pag/continuoustesting/> for the
 original implementation of Continuous Testing as a Eclipse plugin.
@@ -127,6 +126,16 @@ Please report any bugs or feature requests to
 C<bug-test-continuous@rt.cpan.org>, or through the web interface at
 L<http://rt.cpan.org>.
 
+=head1 TODO
+
+=over
+
+=item A good name for executable.
+
+=item Detect and run only a subset of tests instead of running whole test suite everytime.
+
+=back
+
 =head1 AUTHOR
 
 Kang-min Liu  C<< <gugod@gugod.org> >>
@@ -134,7 +143,7 @@ Kang-min Liu  C<< <gugod@gugod.org> >>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2008, Kang-min Liu C<< <gugod@gugod.org> >>. All rights reserved.
+Copyright (c) 2008, Kang-min Liu C<< <gugod@gugod.org> >>.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.
