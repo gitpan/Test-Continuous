@@ -10,6 +10,8 @@ build_requires  'Test::More'        => '0.42';
 
 requires
     "self" => "0.15",
+    "Module::ExtractUse" => 0,
+    "File::Modified" => 0,
     "TAP::Harness" => "3.09",
     "App::Prove" => "3.09",
     "Log::Dispatch" => 0;

@@ -4,12 +4,16 @@ package Test::Continuous;
 
 use 5.008;
 
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.3';
 
 use Exporter::Lite;
 use App::Prove;
 use File::Find;
+use File::Modified;
 use Cwd;
+use Module::ExtractUse;
+use List::MoreUtils qw(uniq);
+use XXX;
 
 our @EXPORT = qw(&runtests);
 {
@@ -17,43 +21,68 @@ our @EXPORT = qw(&runtests);
     *{App::Prove::_exit} = sub {};
 }
 
+my @tests;
+my @changes;
+my @files;
+
+sub _files {
+    return @files if @files;
+    find sub {
+        my $filename = $File::Find::name;
+        return if ! -f $filename;
+        return unless $filename =~ /\.(p[lm]|t)$/ && -f $filename;
+        push @files, $filename;
+    }, getcwd;
+    return @files;
+}
+
+sub _tests_to_run {
+    my %dep;
+
+    my $p = Module::ExtractUse->new;
+    for my $t ( @tests ) {
+        $p->extract_use($t);
+        for my $used ($p->array) {
+            next unless $used =~ s{::}{/}g;
+            $used .= ".pm";
+            push @{$dep{$used}||=[]}, $t;
+        }
+    }
+
+    my @tests_to_run = uniq sort map {
+        if (/.t$/) {
+            $_;
+        }
+        else {
+            my $changed = $_;
+            map { @{$dep{$_}} } grep { index($changed, $_) >= 0 } keys %dep;
+        }
+    } @changes;
+
+    return @tests_to_run
+}
+
 sub _run_once {
     my $prove = App::Prove->new;
     $prove->process_args(
         "--formatter" => "Test::Continuous::Formatter",
-        "-m",
-        "--norc", "--nocolor", "-Q", "-l", "t"
+        "-m", "--norc", "--nocolor", "-l", _tests_to_run
     );
     $prove->run;
 }
 
-my %files;
-sub _changed {
-    my $modified = 0;
-    find sub {
-        my $filename = $File::Find::name;
-        return if $filename =~ /~$/;
-        return if ! -f $filename;
-
-        my $mtime = (stat($filename))[9];
-        if (exists $files{$filename}) {
-            if ( $files{$filename} < $mtime) {
-                $modified = 1;
-                print STDERR "[MSG] $filename is updated\n";
-            }
-        }
-        else {
-            $modified = 1;
-        }
-        $files{$filename} = $mtime;
-    }, getcwd;
-    return $modified;
-}
-
 sub runtests {
-    while (1) {
-        _run_once if _changed;
-        sleep 5;
+    @tests = @ARGV ? @ARGV : <t/*.t>;
+    print "[MSG] Will run continuously test $_\n" for @tests;
+    my $d = File::Modified->new( files => [ _files ] );
+    while(1) {
+        @changes = $d->changed;
+        if ( @changes ) {
+            print "[MSG]: $_ was changed.\n" for @changes;
+            $d->update();
+            sleep 1;
+            _run_once( @changes );
+        }
     }
 }
 
@@ -104,6 +133,19 @@ Test result are displayed on terminal. Also dispatched to Growl if
 C<Log::Dispatch::MacGrowl> is installed. Big plus for perl programmers
 on Mac.
 
+C<Test::Continuous> will auto detect the subset of tests to run.
+For example, say you have two test files C<feature-foo.t> and
+C<feature-bar.t> which test ,and use, your module C<Feature::Foo>
+and C<Feature::Bar> respectively. C<Test::Continuous> can catch
+this static dependency and only run C<feature-foo.t> when C<Feature::Foo>
+is modified, C<feature-bar.t> will only be ran if C<Feature::Bar>
+is modified.
+
+If a C<.t> file is modified, only that test file will be ran.
+
+Dynamic module dependency is more difficult to detect and needs
+further research.
+
 =back
 
 =head1 CONFIGURATION AND ENVIRONMENT
@@ -112,7 +154,8 @@ Test::Continuous requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-L<App::Prove>, L<Log::Dispatcher>, L<Log::Dispatch::MacGrowl>
+L<App::Prove>, L<Log::Dispatcher>, L<Log::Dispatch::MacGrowl>,
+L<Module::ExtractUse>
 
 =head1 INCOMPATIBILITIES
 
@@ -132,7 +175,7 @@ L<http://rt.cpan.org>.
 
 =item A good name for executable.
 
-=item Detect and run only a subset of tests instead of running whole test suite everytime.
+=item Accept a per-module config file to tweak different parameters to prove command.
 
 =back
 
