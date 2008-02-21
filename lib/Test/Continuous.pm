@@ -4,7 +4,7 @@ package Test::Continuous;
 
 use 5.008;
 
-our $VERSION = '0.0.4';
+our $VERSION = '0.0.5';
 
 use Exporter::Lite;
 use App::Prove;
@@ -58,7 +58,9 @@ sub _tests_to_run {
         }
     } @changes;
 
-    return @tests_to_run
+    return @tests if @tests_to_run == 0;
+
+    return @tests_to_run;
 }
 
 sub _run_once {

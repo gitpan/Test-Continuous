@@ -22,4 +22,4 @@ requires:
   TAP::Harness: 3.09
   perl: 5.8.0
   self: 0.15
-version: 0.0.4
+version: 0.0.5
