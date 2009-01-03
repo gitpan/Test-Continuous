@@ -4,7 +4,7 @@ package Test::Continuous;
 
 use 5.008;
 
-our $VERSION = '0.0.5';
+our $VERSION = '0.60';
 
 use Exporter::Lite;
 use App::Prove;
@@ -13,6 +13,14 @@ use File::Modified;
 use Cwd;
 use Module::ExtractUse;
 use List::MoreUtils qw(uniq);
+use File::Temp qw(tempdir tempfile);
+use File::Path qw(rmtree);
+use File::Spec;
+use TAP::Parser;
+use TAP::Parser::Iterator::Stream;
+use Archive::Tar;
+use IO::File;
+use Test::Continuous::Formatter;
 
 our @EXPORT = qw(&runtests);
 {
@@ -64,12 +72,53 @@ sub _tests_to_run {
 }
 
 sub _run_once {
+    my $dir = tempdir;
+    my $file = $dir . "/$$.tar";
+    my @tests = _tests_to_run;
+
     my $prove = App::Prove->new;
     $prove->process_args(
         "--formatter" => "Test::Continuous::Formatter",
-        "-m", "--norc", "--nocolor", "-l", _tests_to_run
+        "--archive" => $file,
+        "-Q",
+        "-m",
+        "--norc", "--nocolor", "-b", "-l", @tests
     );
     $prove->run;
+
+    _analyze_tap_archive($dir, $file, @tests);
+}
+
+sub _analyze_tap_archive {
+    my ($dir, $file, @tests) = @_;
+
+    my $cwd = getcwd;
+    chdir($dir);
+    my $tar = Archive::Tar->new;
+    $tar->read($file, 0);
+    $tar->extract();
+    chdir($cwd);
+
+    for my $test (@tests) {
+        my $file = File::Spec->catfile($dir, $test);
+
+        my $fh = IO::File->new;
+        $fh->open("< $file") or next;
+
+        my $parser = TAP::Parser->new({
+            stream => TAP::Parser::Iterator::Stream->new( $fh )
+        });
+        while (my $result = $parser->next) {
+            if ($result->is_comment) {
+                Test::Continuous::Notifier->send_notify("$test: " . $result->as_string . "\n");
+            }
+            elsif ($result->is_unknown) {
+                Test::Continuous::Notifier->send_notify("$test: " . $result->as_string . "\n", "warning");
+            }
+        }
+    }
+
+    rmtree($dir);
 }
 
 sub runtests {
@@ -154,7 +203,7 @@ Test::Continuous requires no configuration files or environment variables.
 
 =head1 DEPENDENCIES
 
-L<App::Prove>, L<Log::Dispatcher>, L<Log::Dispatch::MacGrowl>,
+L<App::Prove>, L<Log::Dispatch>, L<Log::Dispatch::MacGrowl>,
 L<Module::ExtractUse>
 
 =head1 INCOMPATIBILITIES
