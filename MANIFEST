@@ -1,6 +1,7 @@
 Changes
 inc/Module/AutoInstall.pm
 inc/Module/Install.pm
+inc/Module/Install/AuthorTests.pm
 inc/Module/Install/AutoInstall.pm
 inc/Module/Install/Base.pm
 inc/Module/Install/Can.pm
@@ -19,8 +20,6 @@ META.yml
 README
 t/00.load.t
 t/mock.pl
-t/pod-coverage.t
-t/pod.t
 t/simpleapp-diag.t
 t/simpleapp-dubious.t
 t/simpleapp-simple.t
@@ -28,3 +27,6 @@ t/SimpleApp/lib/SimpleApp.pm
 t/SimpleApp/t/diag.t
 t/SimpleApp/t/dubious.t
 t/SimpleApp/t/simple.t
+xt/perlcritic.t
+xt/pod-coverage.t
+xt/pod.t
