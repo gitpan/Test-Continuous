@@ -5,7 +5,7 @@ package Test::Continuous;
 
 use 5.008;
 
-our $VERSION = '0.62';
+our $VERSION = '0.63';
 
 use Exporter::Lite;
 use App::Prove;
@@ -14,13 +14,6 @@ use File::Modified;
 use Cwd;
 use Module::ExtractUse;
 use List::MoreUtils qw(uniq);
-use File::Temp qw(tempdir tempfile);
-use File::Path qw(rmtree);
-use File::Spec;
-use TAP::Parser;
-use TAP::Parser::Iterator::Stream;
-use Archive::Tar;
-use IO::File;
 use Test::Continuous::Formatter;
 
 our @EXPORT = qw(&runtests);
@@ -38,8 +31,9 @@ sub _files {
     return @files if @files;
     find sub {
         my $filename = $File::Find::name;
+
         return if ! -f $filename;
-        return unless $filename =~ /\.(p[lm]|t)$/ && -f $filename;
+        return unless $filename =~ /\.(p[lm]|t)$/;
         push @files, $filename;
     }, getcwd;
     return @files;
@@ -74,14 +68,10 @@ sub _tests_to_run {
 }
 
 sub _run_once {
-    my $dir = tempdir;
-    my $file = $dir . "/$$.tar";
     my @tests = _tests_to_run;
 
     my $prove = App::Prove->new;
     $prove->process_args(
-        "--formatter" => "Test::Continuous::Formatter",
-        "--archive" => $file,
         "-m",
         "-b",
         "-l",
@@ -89,62 +79,26 @@ sub _run_once {
         @prove_args,
         @tests
     );
+    $prove->formatter("Test::Continuous::Formatter");
+    $prove->verbose(1);
+    $prove->merge(1);
     $prove->run;
-
-    _analyze_tap_archive($dir, $file, @tests);
-}
-
-sub _analyze_tap_archive {
-    my ($dir, $file, @tests) = @_;
-
-    my $cwd = getcwd;
-    chdir($dir);
-    my $tar = Archive::Tar->new;
-    $tar->read($file, 0);
-    $tar->extract();
-    chdir($cwd);
-
-    for my $test (@tests) {
-        my $file = File::Spec->catfile($dir, $test);
-
-        my $fh = IO::File->new;
-        $fh->open("< $file") or next;
-
-        my $parser = TAP::Parser->new({
-            stream => TAP::Parser::Iterator::Stream->new( $fh )
-        });
-
-        my @warning = ();
-        my @comment = ();
-        while (my $result = $parser->next) {
-            if ($result->is_comment) {
-                push @comment, $result->as_string;
-            }
-            elsif ($result->is_unknown) {
-                push @warning, $result->as_string;
-            }
-        }
-
-        if (@warning) {
-            Test::Continuous::Notifier->send_notify(join("\n", "$test:", @warning), "warning");
-        }
-        if (@comment) {
-            Test::Continuous::Notifier->send_notify(join("\n", "$test:", @comment));
-        }
-    }
-
-    rmtree($dir);
 }
 
 sub runtests {
     if (@ARGV) {
         # print "ARGV: " . join ",",@ARGV, "\n";
-        while (-f $ARGV[-1]) {
+        while ($ARGV[-1] && -f $ARGV[-1]) {
             push @tests, pop @ARGV;
         }
         @prove_args = @ARGV;
     } else {
-        @tests = <t/*.t>;
+
+        find sub {
+            my $filename = $File::Find::name;
+            return unless $filename =~ /\.t$/ && -f $filename;
+            push @tests, $filename;
+        }, getcwd;
     }
 
     print "[MSG] Will run continuously test $_\n" for @tests;
@@ -169,7 +123,7 @@ Test::Continuous - Run your tests suite continusouly when developing.
 
 =head1 VERSION
 
-This document describes Test::Continuous version 0.61
+This document describes Test::Continuous version 0.63
 
 =head1 SYNOPSIS
 
@@ -180,7 +134,7 @@ Very simple usage:
 
 If you want to provide prove arguments:
 
-    % perl -MTest::Continuous -e runtests -- --verbose --shuffle
+    % perl -MTest::Continuous -e runtests -- --shuffle
 
 =head1 DESCRIPTION
 
@@ -265,7 +219,7 @@ Kang-min Liu  C<< <gugod@gugod.org> >>
 
 =head1 LICENCE AND COPYRIGHT
 
-Copyright (c) 2008, Kang-min Liu C<< <gugod@gugod.org> >>.
+Copyright (c) 2008,2009 Kang-min Liu C<< <gugod@gugod.org> >>.
 
 This module is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself. See L<perlartistic>.

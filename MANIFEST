@@ -13,6 +13,7 @@ inc/Module/Install/Win32.pm
 inc/Module/Install/WriteAll.pm
 lib/Test/Continuous.pm
 lib/Test/Continuous/Formatter.pm
+lib/Test/Continuous/Formatter/Session.pm
 lib/Test/Continuous/Notifier.pm
 Makefile.PL
 MANIFEST			This list of files
