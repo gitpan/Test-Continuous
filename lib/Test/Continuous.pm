@@ -5,7 +5,7 @@ package Test::Continuous;
 
 use 5.008;
 
-our $VERSION = '0.64';
+our $VERSION = '0.65';
     
 use Exporter::Lite;
 use App::Prove;
@@ -29,13 +29,16 @@ my @files;
 
 sub _files {
     return @files if @files;
+    my $cwd = getcwd;
     find sub {
         my $filename = $File::Find::name;
-
         return if ! -f $filename;
         return unless $filename =~ /\.(p[lm]|t)$/;
+
+        $filename =~ s[^$cwd][];
+
         push @files, $filename;
-    }, getcwd;
+    }, $cwd;
     return @files;
 }
 
