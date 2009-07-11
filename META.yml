@@ -22,6 +22,7 @@ no_index:
     - xt
 requires:
   Exporter::Lite: 0.02
+  File::ChangeNotify: 0.07
   File::Modified: 0.07
   File::Spec: 3.29
   File::Temp: 0.21
@@ -34,4 +35,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: http://github.com/gugod/test-continuous/tree
-version: 0.66
+version: 0.67
