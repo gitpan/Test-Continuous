@@ -12,7 +12,6 @@ build_requires  'Test::More'        => '0.42';
 
 requires(
     "Exporter::Lite"     => 0.02,
-    "File::Modified"     => 0.07,
     "File::Spec"         => 3.29,
     "File::Temp"         => 0.21,
     "List::MoreUtils"    => 0.22,
@@ -20,7 +19,7 @@ requires(
     "Module::ExtractUse" => 0.23,
     "TAP::Harness"       => 3.16,
     "self"               => 0.32,
-    "File::ChangeNotify" => 0.07,
+    "File::ChangeNotify" => 0.12
 );
 
 features(
