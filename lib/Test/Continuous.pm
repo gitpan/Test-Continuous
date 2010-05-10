@@ -5,7 +5,7 @@ package Test::Continuous;
 
 use 5.008;
 
-our $VERSION = '0.68';
+our $VERSION = '0.69';
 
 use Exporter::Lite;
 use App::Prove;
@@ -61,13 +61,14 @@ sub _tests_to_run {
 }
 
 sub _run_once {
+    my $build = shift;
+
     my @tests = _tests_to_run;
 
     my $prove = App::Prove->new;
     $prove->process_args(
         "-m",
-        "-b",
-        "-l",
+        $build ? "-b" : "-l",
         "--norc",
         @prove_args,
         @tests
@@ -78,6 +79,34 @@ sub _run_once {
     $prove->run;
 }
 
+sub _rebuild {
+    my %build;
+    if ( -e "Build.PL" ) {
+        $build{cmd} = './Build';
+        $build{config} = 'Build.PL';
+    }
+    elsif ( -e "Makefile.PL" ) {
+        $build{cmd} = 'make';
+        $build{config} = 'Makefile.PL';
+    }
+
+    return unless $build{cmd};
+
+    my $changes = shift;
+
+    # Rerun the config file if it changed or hasn't been run
+    if ( !-e $build{cmd} or grep { $_ eq $build{config} } @$changes) {
+        my $cmd = "$^X $build{config}";
+        system $cmd;
+        die "$cmd exited with non-zero" unless $? == 0;
+    }
+
+    system $build{cmd};
+    die "$build{cmd} exited with non-zero" unless $? == 0;
+
+    return 1;
+}
+
 sub runtests {
     if (@ARGV) {
         # print "ARGV: " . join ",",@ARGV, "\n";
@@ -86,7 +115,6 @@ sub runtests {
         }
         @prove_args = @ARGV;
     } else {
-
         find sub {
             my $filename = $File::Find::name;
             return unless $filename =~ /\.t$/ && -f $filename;
@@ -104,9 +132,14 @@ sub runtests {
         exclude => [qr/\.(git|svn)/, qr(~$), qr(\.#.*$)]
     );
 
+    my $run = 1;
     while ( @changes = $watcher->wait_for_events() ) {
-        print "[MSG]:" .  $_->path . " was changed.\n" for @changes;
-        _run_once;
+        if ($run) {
+            print "[MSG]:" .  $_->path . " was changed.\n" for @changes;
+            _run_once( _rebuild(\@changes) );
+            print "\n\n" . "-" x 60 ."\n\n";
+        }
+        $run = 1-$run;
     }
 }
 
