@@ -1,5 +1,9 @@
 Revision history for Test-Continuous
 
+0.71:
+- let "autoprove <prove args>" run all tests instead of no tests at all.
+- fix typos
+
 0.70:
 - remove the use of Exporter::Lite in favor of using 'autoprove' command.
 - Fix RT 66822: exclude vim swap files.

@@ -1,5 +1,5 @@
 ---
-abstract: 'Run your tests suite continusouly when developing.'
+abstract: 'Run your test suite continuously when developing.'
 author:
   - 'Kang-min Liu  C<< <gugod@gugod.org> >>'
 build_requires:
@@ -34,4 +34,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: http://github.com/gugod/test-continuous/tree
-version: 0.70
+version: 0.71
