@@ -5,6 +5,7 @@ author:
 build_requires:
   ExtUtils::MakeMaker: 6.42
   Test::More: 0.42
+  YAML: 0.77
 configure_requires:
   ExtUtils::MakeMaker: 6.42
 distribution_type: module
@@ -21,6 +22,7 @@ no_index:
     - t
     - xt
 requires:
+  App::Prove: 3.23
   File::ChangeNotify: 0.12
   File::Spec: 3.29
   File::Temp: 0.21
@@ -33,5 +35,5 @@ requires:
   self: 0.32
 resources:
   license: http://dev.perl.org/licenses/
-  repository: http://github.com/gugod/test-continuous/tree
-version: 0.71
+  repository: git://github.com/gugod/Test-Continuous.git
+version: 0.72

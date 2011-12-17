@@ -22,6 +22,7 @@ MANIFEST			This list of files
 META.yml
 README
 t/00.load.t
+t/lib/Test/Continuous/Notifier.pm
 t/mock.pl
 t/simpleapp-diag.t
 t/simpleapp-dubious.t
