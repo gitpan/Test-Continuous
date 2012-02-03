@@ -36,4 +36,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: git://github.com/gugod/Test-Continuous.git
-version: 0.72
+version: 0.73
